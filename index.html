@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Impressão Profissional</title>
+    <style>
+        body { font-family: sans-serif; background: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 15px; shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+        h1 { color: #333; font-size: 22px; margin-bottom: 30px; }
+        button { 
+            width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; 
+            font-weight: bold; cursor: pointer; color: white; transition: 0.3s;
+        }
+        .btn-elgin { background: #2c3e50; }
+        .btn-epson { background: #2980b9; }
+        .btn-both { background: #27ae60; }
+        button:hover { opacity: 0.8; transform: scale(1.02); }
+        #status { margin-top: 20px; font-weight: bold; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Controle de Impressão</h1>
+    
+    <button class="btn-elgin" onclick="imprimir('ELGIN')">Imprimir na ELGIN</button>
+    <button class="btn-epson" onclick="imprimir('EPSON')">Imprimir na EPSON</button>
+    <button class="btn-both" onclick="imprimirAmbas()">Imprimir em AMBAS</button>
+
+    <div id="status">Status: Pronta para uso</div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
