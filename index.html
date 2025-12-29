@@ -2,34 +2,92 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Impressão Profissional</title>
+    <title>Teste de Impressão Profissional</title>
     <style>
-        body { font-family: sans-serif; background: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 15px; shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
-        h1 { color: #333; font-size: 22px; margin-bottom: 30px; }
-        button { 
-            width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; 
-            font-weight: bold; cursor: pointer; color: white; transition: 0.3s;
-        }
-        .btn-elgin { background: #2c3e50; }
-        .btn-epson { background: #2980b9; }
-        .btn-both { background: #27ae60; }
-        button:hover { opacity: 0.8; transform: scale(1.02); }
-        #status { margin-top: 20px; font-weight: bold; color: #666; font-size: 14px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; border: 1px solid #333; }
+        h2 { color: #00ff88; margin-bottom: 30px; font-weight: 300; letter-spacing: 1px; }
+        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-transform: uppercase; }
+        
+        .btn-epson { background: #0058a9; color: white; }
+        .btn-elgin { background: #f3c300; color: #1a1a1a; }
+        .btn-ambas { background: #444; color: white; border: 1px solid #666; }
+        
+        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+
+        #status { margin-top: 20px; padding: 10px; border-radius: 5px; font-size: 12px; background: #000; min-height: 18px; color: #888; border: 1px solid #222; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Controle de Impressão</h1>
+    <h2>Impressão API</h2>
     
-    <button class="btn-elgin" onclick="imprimir('ELGIN')">Imprimir na ELGIN</button>
-    <button class="btn-epson" onclick="imprimir('EPSON')">Imprimir na EPSON</button>
-    <button class="btn-both" onclick="imprimirAmbas()">Imprimir em AMBAS</button>
+    <button class="btn btn-epson" onclick="enviarParaAPI('EPSON')">1. Imprimir na EPSON</button>
+    <button class="btn btn-elgin" onclick="enviarParaAPI('ELGIN')">2. Imprimir na ELGIN</button>
+    <button class="btn btn-ambas" onclick="imprimirNasDuas()">3. Imprimir em AMBAS</button>
 
-    <div id="status">Status: Pronta para uso</div>
+    <div id="status">Status: Pronto</div>
 </div>
 
-<script src="script.js"></script>
+<script>
+    // A URL aponta para o PROXY (8080) que repassa para o Delphi (9000)
+    const URL_PROXY = 'http://localhost:8080/print';
+
+    async function enviarParaAPI(nomeImpressora) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = `Enviando comando para ${nomeImpressora}...`;
+        statusDiv.style.color = "#888";
+
+        // JSON exatamente como o seu Delphi espera
+        const dados = {
+            "impressora": {
+                "caminho": nomeImpressora, // EPSON ou ELGIN
+                "model": 1
+            },
+            "pedido": {
+                "cliente": "TESTE TECNICO",
+                "pedido": 123456789
+            },
+            "produtos": [
+                {
+                    "descricao": "PRODUTO TESTE " + nomeImpressora,
+                    "quantidade": 1,
+                    "observacao": ["TESTE DE BOTAO WEB"]
+                }
+            ]
+        };
+
+        try {
+            const response = await fetch(URL_PROXY, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok) {
+                statusDiv.innerText = `SUCESSO: ${nomeImpressora} impressa!`;
+                statusDiv.style.color = "#00ff88";
+            } else {
+                statusDiv.innerText = `ERRO: Servidor retornou código ${response.status}`;
+                statusDiv.style.color = "#ff4444";
+            }
+        } catch (error) {
+            statusDiv.innerText = "ERRO: O proxy.js está rodando no terminal?";
+            statusDiv.style.color = "#ff4444";
+            console.error(error);
+        }
+    }
+
+    async function imprimirNasDuas() {
+        // Envia para a primeira, aguarda um pouco e envia para a segunda
+        await enviarParaAPI('EPSON');
+        setTimeout(() => {
+            enviarParaAPI('ELGIN');
+        }, 800); 
+    }
+</script>
+
 </body>
 </html>
