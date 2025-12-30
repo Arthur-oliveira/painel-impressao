@@ -1,38 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Impressão Profissional</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center; border: 1px solid #333; }
+        h2 { color: #00ff88; margin-bottom: 30px; font-weight: 300; letter-spacing: 1px; }
+        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-transform: uppercase; }
+        
+        .btn-epson { background: #0058a9; color: white; }
+        .btn-elgin { background: #f3c300; color: #1a1a1a; }
+        .btn-ambas { background: #444; color: white; border: 1px solid #666; }
+        
+        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+
+        #status { margin-top: 20px; padding: 10px; border-radius: 5px; font-size: 12px; background: #000; min-height: 18px; color: #888; border: 1px solid #222; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Impressão API</h2>
+    
+    <button class="btn btn-epson" onclick="enviarParaAPI('EPSON')">1. Imprimir na EPSON</button>
+    <button class="btn btn-elgin" onclick="enviarParaAPI('ELGIN')">2. Imprimir na ELGIN</button>
+    <button class="btn btn-ambas" onclick="imprimirNasDuas()">3. Imprimir em AMBAS</button>
+
+    <div id="status">Status: Aguardando comando...</div>
+</div>
+
 <script>
-    // --- CONFIGURAÇÃO DE CONEXÃO ---
-    // Enquanto testamos localmente, usamos localhost. 
-    // Depois, trocaremos apenas este IP pelo do Radmin VPN.
+    // --- CONFIGURAÇÃO DE REDE ---
+    // Para teste local: use 'localhost'
+    // Para Radmin VPN: use o IP do computador da impressora (ex: '26.15.120.45')
     const IP_SERVIDOR = 'localhost'; 
     const URL_PROXY = `http://${IP_SERVIDOR}:8080/print`;
 
     async function enviarParaAPI(nomeImpressora) {
         const statusDiv = document.getElementById('status');
-        statusDiv.innerText = `Comunicando com ${nomeImpressora}...`;
+        statusDiv.innerText = `Enviando para ${nomeImpressora}...`;
         statusDiv.style.color = "#888";
 
-        // Objeto de dados formatado para o seu backend Delphi
         const dados = {
             "impressora": {
-                "caminho": nomeImpressora, // Ex: 'EPSON' ou 'ELGIN'
+                "caminho": nomeImpressora,
                 "model": 1
             },
             "pedido": {
-                "cliente": "CLIENTE TESTE WEB",
-                "pedido": Math.floor(Math.random() * 10000) // Número aleatório para teste
+                "cliente": "TESTE SISTEMA WEB",
+                "pedido": Math.floor(Math.random() * 99999)
             },
             "produtos": [
                 {
-                    "descricao": "TESTE DE IMPRESSAO VIA BROWSER",
+                    "descricao": "PRODUTO TESTE " + nomeImpressora,
                     "quantidade": 1,
-                    "observacao": ["TESTE DE CONEXAO", "REVISADO"]
+                    "observacao": ["IMPRESSÃO VIA BRAVE", "REVISADO"]
                 }
             ]
         };
 
         try {
-            // timeout de 5 segundos para não travar a página se o servidor estiver offline
+            // Aborta a tentativa se o proxy não responder em 5 segundos
             const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
 
             const response = await fetch(URL_PROXY, {
                 method: 'POST',
@@ -41,32 +74,40 @@
                 signal: controller.signal
             });
 
-            clearTimeout(id);
+            clearTimeout(timeoutId);
 
             if (response.ok) {
-                statusDiv.innerText = `✅ SUCESSO: ${nomeImpressora} respondeu!`;
+                statusDiv.innerText = `✅ SUCESSO: ${nomeImpressora} OK!`;
                 statusDiv.style.color = "#00ff88";
             } else {
-                statusDiv.innerText = `❌ ERRO: Servidor retornou ${response.status}`;
+                statusDiv.innerText = `❌ ERRO: Servidor respondeu ${response.status}`;
                 statusDiv.style.color = "#ff4444";
             }
         } catch (error) {
             if (error.name === 'AbortError') {
-                statusDiv.innerText = "❌ ERRO: Tempo esgotado (Servidor Offline?)";
+                statusDiv.innerText = "❌ ERRO: Tempo esgotado (Proxy offline?)";
             } else {
-                statusDiv.innerText = "❌ ERRO: Sem conexão com o Proxy.js";
+                statusDiv.innerText = "❌ ERRO: Sem conexão com Proxy.js na 8080";
             }
             statusDiv.style.color = "#ff4444";
-            console.error("Falha na requisição:", error);
+            console.error("Erro detalhado:", error);
         }
     }
 
     async function imprimirNasDuas() {
+        const statusDiv = document.getElementById('status');
         statusDiv.innerText = "Iniciando fila dupla...";
+        statusDiv.style.color = "#f3c300";
+
+        // Imprime na primeira
         await enviarParaAPI('EPSON');
-        // Pequeno delay entre as impressões para não sobrecarregar o buffer
+        
+        // Aguarda 1.2 segundos e imprime na segunda
         setTimeout(() => {
             enviarParaAPI('ELGIN');
-        }, 1000); 
+        }, 1200); 
     }
 </script>
+
+</body>
+</html>
